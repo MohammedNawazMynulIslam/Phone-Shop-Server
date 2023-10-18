@@ -14,7 +14,7 @@ app.use(express.json())
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.7jyxnen.mongodb.net/?retryWrites=true&w=majority`;
 
-console.log(uri)
+
 
 const client = new MongoClient(uri, {
   serverApi: {
@@ -52,25 +52,39 @@ const brands =[
 ]
 async function run() {
   try {
-
     await client.connect();
     const brandCollection = client.db("BuyPhoneDB").collection('brands')
+    const productCollection = client.db("BuyPhoneDB").collection('products')
+
+
 
     const result = await brandCollection.insertMany(brands)
     console.log(`Inserted ${result.insertedCount} documents`)
-    // await client.db("admin").command({ ping: 1 });
+
+    // create data(post)
+    app.post('/addProduct',async(req,res)=>{
+      const newProduct= req.body
+      console.log(newProduct)
+      const result = await productCollection.insertOne(newProduct)
+      res.send(result)
+    })
+
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
 
-    // await client.close();
   }
 }
 run().catch(console.dir);
+
+// brand name and img
+app.get('/brands',(req,res)=>{
+  res.send(brands)
+})
 
 app.get('/', (req, res) => {
   res.send('Hello World!')
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Server running at http://localhost:${port}`)
 })
