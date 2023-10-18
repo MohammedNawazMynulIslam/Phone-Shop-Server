@@ -68,6 +68,15 @@ async function run() {
       const result = await productCollection.insertOne(newProduct)
       res.send(result)
     })
+    // get product my brand name
+    app.get("/product/:brandName", async (req, res) =>{
+      const brandName = req.params.brandName;
+      const products = await productCollection.find({
+        brandName}).toArray();
+        res.send(products)
+
+
+    })
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
