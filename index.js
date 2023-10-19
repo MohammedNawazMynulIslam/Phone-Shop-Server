@@ -1,7 +1,7 @@
 
 const express = require('express')
 const cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config()
 
 const app = express()
@@ -56,8 +56,6 @@ async function run() {
     const brandCollection = client.db("BuyPhoneDB").collection('brands')
     const productCollection = client.db("BuyPhoneDB").collection('products')
 
-
-
     const result = await brandCollection.insertMany(brands)
     console.log(`Inserted ${result.insertedCount} documents`)
 
@@ -68,15 +66,41 @@ async function run() {
       const result = await productCollection.insertOne(newProduct)
       res.send(result)
     })
-    // get product my brand name
+    // get product by brand name
+
     app.get("/product/:brandName", async (req, res) =>{
       const brandName = req.params.brandName;
       const products = await productCollection.find({
         brandName}).toArray();
         res.send(products)
 
-
     })
+    // get product by brand name then product id
+    app.get("/product/:brandName/:id", async (req, res) =>{
+      const id = req.params.id;
+      const product = await productCollection.find({id}).toArray();
+      res.send(product)
+      })
+
+
+      app.put("/product/:id", async (req, res) =>{
+        const id = req.params.id;
+        const filter = {_id: new ObjectId(id)}
+        const options = {upsert:true}
+        const updatedProduct = req.body
+        const product ={
+          $set:{
+            image:updatedProduct. image,
+      name:updatedProduct.name,
+      brandName:updatedProduct.brandName,
+      price:updatedProduct.price,
+      type:updatedProduct.type,
+      rating:updatedProduct.rating
+          },
+        }
+        const result =await productCollection.updateOne(filter,product,options)
+        res.send(result)
+      })
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
