@@ -55,6 +55,8 @@ async function run() {
     await client.connect();
     const brandCollection = client.db("BuyPhoneDB").collection('brands')
     const productCollection = client.db("BuyPhoneDB").collection('products')
+    const addToCartCollection  = client.db("BuyPhoneDB").collection('addCart')
+
 
     const result = await brandCollection.insertMany(brands)
     console.log(`Inserted ${result.insertedCount} documents`)
@@ -67,7 +69,6 @@ async function run() {
       res.send(result)
     })
     // get product by brand name
-
     app.get("/product/:brandName", async (req, res) =>{
       const brandName = req.params.brandName;
       const products = await productCollection.find({
@@ -75,32 +76,43 @@ async function run() {
         res.send(products)
 
     })
-    // get product by brand name then product id
-    app.get("/product/:brandName/:id", async (req, res) =>{
+
+// get product by id
+    app.get("/products/:id", async (req, res) => {
       const id = req.params.id;
-      const product = await productCollection.find({id}).toArray();
-      res.send(product)
-      })
+      const query = {_id : new ObjectId(id)}
+      const result = await productCollection.findOne(query)
+      res.send(result)
+    });
+     // update
+    app.put('/products/:id',async(req,res)=>{
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)}
+      const options = {upsert:true}
+      const updateProduct =req.body;
+      const product = {
+        $set:{
+          image: updateProduct.image,
+          name: updateProduct.name,
+          brandName: updateProduct.brandName,
+          price: updateProduct.price,
+          type: updateProduct.type,
+          rating: updateProduct.rating,
+      }
+    }
+    const result = await productCollection.updateOne(filter,product,options)
+    res.send(result)
+    })
+
+// add to cart
+app.post('/addCart',async(req,res)=>{
+  const addToCart= req.body
+  console.log(addToCart)
+  const result = await addToCartCollection.insertOne(addToCart)
+  res.send(result)
+})
 
 
-      app.put("/product/:id", async (req, res) =>{
-        const id = req.params.id;
-        const filter = {_id: new ObjectId(id)}
-        const options = {upsert:true}
-        const updatedProduct = req.body
-        const product ={
-          $set:{
-            image:updatedProduct. image,
-      name:updatedProduct.name,
-      brandName:updatedProduct.brandName,
-      price:updatedProduct.price,
-      type:updatedProduct.type,
-      rating:updatedProduct.rating
-          },
-        }
-        const result =await productCollection.updateOne(filter,product,options)
-        res.send(result)
-      })
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
@@ -115,7 +127,7 @@ app.get('/brands',(req,res)=>{
 })
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
+  res.send('Welcome to the phone-shop server!')
 })
 
 app.listen(port, () => {
